@@ -1,0 +1,54 @@
+{
+    "books":[
+        {
+            "title":"KENNEDY CURSE",
+            "price":446,
+            "url":"http://127.0.0.1:8000/books/1.jpg"
+        },
+        {
+            "title":"TOM CLANCY'S ENEMY CONTACT",
+            "price":206,
+            "url":"http://127.0.0.1:8000/books/2.jpg"
+        },
+        {
+            "title":"HOW WE LEARN",
+            "price":712,
+            "url":"http://127.0.0.1:8000/books/3.jpg"
+        },
+        {
+            "title":"LONELY PLANET",
+            "price":487,
+            "url":"http://127.0.0.1:8000/books/4.jpg"
+        },
+        {
+            "title":"UNFREE SPEECH",
+            "price":296,
+            "url":"http://127.0.0.1:8000/books/5.jpg"
+        },
+        {
+            "title":"ROSE PETAL SUMMER",
+            "price":243,
+            "url":"http://127.0.0.1:8000/books/6.jpg"
+        },
+        {
+            "title":"INTANGIBLES",
+            "price":393,
+            "url":"http://127.0.0.1:8000/books/7.jpg"
+        },
+        {
+            "title":"MONOCLE BOOK OF JAPAN",
+            "price":1162,
+            "url":"http://127.0.0.1:8000/books/8.jpg"
+        },
+        {
+            "title":"CARI MORA",
+            "price":236,
+            "url":"http://127.0.0.1:8000/books/9.jpg"
+        },
+        {
+            "title":"HOW TO WIN",
+            "price":363,
+            "url":"http://127.0.0.1:8000/books/10.jpg"
+        }
+    ]
+}
