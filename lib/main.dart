@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 void main() => runApp(MaterialApp(
       initialRoute: '/',
@@ -9,70 +11,63 @@ void main() => runApp(MaterialApp(
       },
     ));
 
-class Book {
-  String url;
-  String title;
-  int price;
-
-  Book({this.title, this.price, this.url});
-}
-
-List<Book> books = [
-  Book(
-    title: 'KENNEDY CURSE',
-    price: 446,
-    url: 'assets/books/1.jpg',
-  ),
-  Book(
-    title: 'TOM CLANCY\'S ENEMY CONTACT',
-    price: 206,
-    url: 'assets/books/2.jpg',
-  ),
-  Book(
-    title: 'HOW WE LEARN',
-    price: 712,
-    url: 'assets/books/3.jpg',
-  ),
-  Book(
-    title: 'LONELY PLANET',
-    price: 487,
-    url: 'assets/books/4.jpg',
-  ),
-  Book(
-    title: 'UNFREE SPEECH',
-    price: 296,
-    url: 'assets/books/5.jpg',
-  ),
-  Book(
-    title: 'ROSE PETAL SUMMER',
-    price: 243,
-    url: 'assets/books/6.jpg',
-  ),
-  Book(
-    title: 'INTANGIBLES',
-    price: 393,
-    url: 'assets/books/7.jpg',
-  ),
-  Book(
-    title: 'MONOCLE BOOK OF JAPAN',
-    price: 1162,
-    url: 'assets/books/8.jpg',
-  ),
-  Book(
-    title: 'CARI MORA',
-    price: 236,
-    url: 'assets/books/9.jpg',
-  ),
-  Book(
-    title: 'HOW TO WIN',
-    price: 363,
-    url: 'assets/books/10.jpg',
-  ),
-];
-
+List<Book> books;
 int totalPrice = 0;
 int currentIndex = 0;
 List<Book> cart = [];
+
+class Books {
+  Books({books});
+
+  Books.fromJson(Map<String, dynamic> json) {
+    if (json['books'] != null) {
+      books = [];
+      json['books'].forEach((v) {
+        books.add(Book.fromJson(v));
+      });
+    }
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    if (books != null) {
+      data['book'] = books.map((v) => v.toJson()).toList();
+    }
+    return data;
+  }
+}
+
+class Book {
+  String title;
+  int price;
+  String url;
+
+  Book({this.title, this.price, this.url});
+
+  Book.fromJson(Map<String, dynamic> json) {
+    title = json['title'];
+    price = json['price'];
+    url = json['url'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['title'] = this.title;
+    data['price'] = this.price;
+    data['url'] = this.url;
+    return data;
+  }
+}
+
+Future<List<Book>> fetchBooks() async {
+  final response = await http.get('http://127.0.0.1:8000/data.json');
+  if (response.statusCode == 200) {
+    Books.fromJson(jsonDecode(response.body));
+    return books;
+  } else {
+    throw Exception('Failed to load books');
+  }
+}
 
 class MyStore extends StatefulWidget {
   @override
@@ -80,6 +75,14 @@ class MyStore extends StatefulWidget {
 }
 
 class _MyStoreState extends State<MyStore> {
+  Future<List<Book>> futureBooks;
+
+  @override
+  void initState() {
+    super.initState();
+    futureBooks = fetchBooks();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -94,35 +97,43 @@ class _MyStoreState extends State<MyStore> {
         ),
         backgroundColor: Colors.blue[900],
       ),
-      body: ListView.builder(
-        itemCount: books.length,
-        itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 1,
-              horizontal: 4,
-            ),
-            child: Card(
-              child: ListTile(
-                leading: ClipRRect(
-                  child: Image.asset(books[index].url),
-                ),
-                title: Text(books[index].title),
-                subtitle: Text('Price: THB ${books[index].price}'),
-                trailing: Icon(Icons.add),
-                onTap: () {
-                  currentIndex = index;
-                  Navigator.pushNamed(context, '/book')
-                      .then((value) => setState(() {}));
-                },
-              ),
-            ),
-          );
-        },
+      body: Center(
+        child: FutureBuilder<List<Book>>(
+          future: futureBooks,
+          builder: (context, snapshot) {
+            if (snapshot.hasError) print(snapshot.error);
+            return snapshot.hasData
+                ? ListView.builder(
+                    itemCount: books.length,
+                    itemBuilder: (context, index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 1,
+                          horizontal: 4,
+                        ),
+                        child: Card(
+                          child: ListTile(
+                            leading: ClipRRect(
+                              child: Image.network(books[index].url),
+                            ),
+                            title: Text(books[index].title),
+                            subtitle: Text('Price: THB ${books[index].price}'),
+                            trailing: Icon(Icons.add),
+                            onTap: () {
+                              currentIndex = index;
+                              Navigator.pushNamed(context, '/book')
+                                  .then((value) => setState(() {}));
+                            },
+                          ),
+                        ),
+                      );
+                    })
+                : Center(child: CircularProgressIndicator());
+          },
+        ),
       ),
       bottomNavigationBar: Container(
         height: 80,
-        // color: Colors.blue[900],
         decoration: BoxDecoration(
           color: Colors.blue[900],
           boxShadow: [
@@ -219,7 +230,7 @@ class _BookPageState extends State<BookPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.start,
           children: [
-            Image.asset(
+            Image.network(
               books[currentIndex].url,
               scale: 0.4,
               height: 300,
@@ -235,11 +246,9 @@ class _BookPageState extends State<BookPage> {
                 ),
               ),
             ),
-            // SizedBox(height: 20),
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 100.0,
-                // vertical: 10,
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -335,7 +344,6 @@ class _BookPageState extends State<BookPage> {
                     setState(() {
                       totalPrice += books[currentIndex].price;
                       cart.add(books[currentIndex]);
-                      // Navigator.of(context).pushNamed('/').then((value) => setState(() {}));
                       Navigator.pop(context);
                     });
                   },
@@ -381,15 +389,10 @@ class _PaymentPageState extends State<PaymentPage> {
             child: Card(
               child: ListTile(
                 leading: ClipRRect(
-                  child: Image.asset(cart[index].url),
+                  child: Image.network(cart[index].url),
                 ),
                 title: Text(cart[index].title),
                 subtitle: Text('Price: THB ${cart[index].price}'),
-                // trailing: Icon(Icons.add),
-                // onTap: () {
-                //   currentIndex = index;
-                //   Navigator.pushNamed(context, '/book').then((value) => setState(() {}));
-                // },
               ),
             ),
           );
@@ -397,7 +400,6 @@ class _PaymentPageState extends State<PaymentPage> {
       ),
       bottomNavigationBar: Container(
         height: 80,
-        // color: Colors.blue[900],
         decoration: BoxDecoration(
           color: Colors.blue[900],
           boxShadow: [
